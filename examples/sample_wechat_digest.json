@@ -1,0 +1,34 @@
+{
+  "group": {
+    "name": "示例群",
+    "username": "example@chatroom"
+  },
+  "range": {
+    "start": "2026-06-21",
+    "end": "2026-06-24"
+  },
+  "messages": [
+    {
+      "local_id": 1,
+      "type": "文本",
+      "sender": "Alice",
+      "time": "2026-06-24 10:00:00",
+      "content": "今天讨论一下旅行计划。"
+    },
+    {
+      "local_id": 2,
+      "type": "图片",
+      "sender": "Bob",
+      "time": "2026-06-24 10:01:00",
+      "content": "<msg><img md5=\"0123456789abcdef0123456789abcdef\" /></msg>"
+    },
+    {
+      "local_id": 3,
+      "type": "链接/文件",
+      "sender": "Carol",
+      "time": "2026-06-24 10:02:00",
+      "content": "<msg><appmsg><title>行程.pdf</title><appattach><filemd5>abcdefabcdefabcdefabcdefabcdefab</filemd5><fileext>pdf</fileext></appattach></appmsg></msg>"
+    }
+  ]
+}
+
