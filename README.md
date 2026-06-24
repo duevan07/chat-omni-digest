@@ -30,6 +30,20 @@ This project intentionally studies and consolidates ideas from:
 
 ## Install
 
+Install the packaged release from GitHub:
+
+```bash
+python3 -m pip install "chat-omni-digest[pdf,office,media] @ git+https://github.com/duevan07/chat-omni-digest.git@v0.1.0"
+```
+
+After the PyPI publisher is enabled, the shorter install command will be:
+
+```bash
+python3 -m pip install "chat-omni-digest[pdf,office,media]"
+```
+
+For local development:
+
 ```bash
 python3 -m pip install -e .
 ```

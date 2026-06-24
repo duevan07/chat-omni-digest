@@ -12,17 +12,56 @@ license = "MIT"
 authors = [{ name = "Xiaochaige" }]
 keywords = ["chat", "wechat", "archive", "digest", "media", "local-first"]
 dependencies = []
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: Chinese (Simplified)",
+    "Operating System :: MacOS",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: Chat",
+    "Topic :: Multimedia",
+    "Topic :: Text Processing",
+    "Typing :: Typed",
+]
 
 [project.optional-dependencies]
 pdf = ["pypdf>=5.0", "reportlab>=4.0"]
 office = ["python-docx>=1.1", "openpyxl>=3.1"]
 media = ["pycryptodome>=3.20"]
-dev = ["pytest>=8.0"]
+dev = ["build>=1.2", "pytest>=8.0", "twine>=6.0"]
 
 [project.scripts]
 chatdig = "chat_omni_digest.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/duevan07/chat-omni-digest"
+Repository = "https://github.com/duevan07/chat-omni-digest"
+Issues = "https://github.com/duevan07/chat-omni-digest/issues"
+Changelog = "https://github.com/duevan07/chat-omni-digest/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/chat_omni_digest"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/CHANGELOG.md",
+    "/LICENSE",
+    "/README.md",
+    "/docs",
+    "/examples",
+    "/pyproject.toml",
+    "/skills",
+    "/src",
+    "/tests",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-
