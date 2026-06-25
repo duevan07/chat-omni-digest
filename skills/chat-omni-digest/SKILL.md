@@ -20,16 +20,25 @@ chatdig normalize input.json work/conversation.json
 ```bash
 chatdig resolve-media work/conversation.json work/conversation.resolved.json \
   --account-dir /path/to/wechat/account \
-  --hardlink-db /path/to/hardlink.db
+  --hardlink-db /path/to/hardlink.db \
+  --message-resource-db /path/to/message_resource.db
 ```
 
-3. Extract local file text:
+3. Optionally diagnose and decode WeChat image `.dat` files:
 
 ```bash
-chatdig enrich work/conversation.resolved.json work/conversation.enriched.json
+chatdig image-keys doctor --conversation work/conversation.resolved.json
+chatdig decode-images work/conversation.resolved.json work/conversation.decoded.json \
+  --output-dir work/media/decoded-image
 ```
 
-4. Generate report:
+4. Extract local file text. Use `conversation.decoded.json` if image decoding ran; otherwise use `conversation.resolved.json`.
+
+```bash
+chatdig enrich work/conversation.decoded.json work/conversation.enriched.json
+```
+
+5. Generate report:
 
 ```bash
 chatdig summarize work/conversation.enriched.json outputs/report.md
@@ -38,4 +47,3 @@ chatdig summarize work/conversation.enriched.json outputs/report.md
 ## Privacy
 
 Do not upload private chats, private media, Kimi credentials, Yuanbao browser profiles, decrypted databases, or key extraction logs. Kimi and Yuanbao adapters are optional and must be invoked only when the user explicitly wants external processing.
-

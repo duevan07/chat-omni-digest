@@ -10,7 +10,8 @@
 - Resolves WeChat images, videos, and file attachments through `hardlink.db`.
 - Restores local file paths for PDFs, Office files, images, and videos.
 - Decodes classic WeChat image `.dat` files by XOR inference.
-- Provides a newer `.dat` v4 decoder hook when `pycryptodome` is installed.
+- Decodes newer WeChat V2 `.dat` image files when local image AES/XOR keys are supplied.
+- Diagnoses image key readiness without printing key material.
 - Extracts local text from PDF, Word, Excel, Markdown, text, CSV, and JSON attachments.
 - Generates Markdown and optional PDF digest reports.
 - Keeps Kimi video summarization and Yuanbao article reading as optional adapters.
@@ -33,7 +34,7 @@ This project intentionally studies and consolidates ideas from:
 Install the packaged release from GitHub:
 
 ```bash
-python3 -m pip install "chat-omni-digest[pdf,office,media] @ git+https://github.com/duevan07/chat-omni-digest.git@v0.1.1"
+python3 -m pip install "chat-omni-digest[pdf,office,media] @ git+https://github.com/duevan07/chat-omni-digest.git@v0.1.2"
 ```
 
 After the PyPI publisher is enabled, the shorter install command will be:
@@ -78,6 +79,21 @@ Extract local file text:
 chatdig enrich outputs/conversation.resolved.json outputs/conversation.enriched.json
 ```
 
+Diagnose whether newer WeChat image `.dat` files can be decoded:
+
+```bash
+chatdig image-keys doctor \
+  --conversation outputs/conversation.resolved.json \
+  --image-key-config ~/.config/chat-omni-digest/image-keys.json
+```
+
+Decode resolved image `.dat` files after keys are configured:
+
+```bash
+chatdig decode-images outputs/conversation.resolved.json outputs/conversation.decoded.json \
+  --output-dir outputs/media/decoded-image
+```
+
 Generate a Markdown report:
 
 ```bash
@@ -99,8 +115,13 @@ chatdig pipeline examples/sample_wechat_digest.json \
   --message-resource-db /path/to/message_resource.db \
   --output-dir outputs/demo \
   --pdf \
-  --copy-media
+  --copy-media \
+  --decode-images
 ```
+
+Image key values can be supplied through `~/.config/chat-omni-digest/image-keys.json`,
+`CHATDIG_IMAGE_AES_KEY` / `CHATDIG_IMAGE_XOR_KEY`, or command-line flags. Prefer
+the config or environment variables so secrets do not land in shell history.
 
 ## Media Resolution Strategy
 
@@ -121,6 +142,22 @@ msg/video/<dir1>/<file>
 FileStorage/MsgAttach/<dir1>/Image/<dir2>/<file>
 FileStorage/File/<dir2>/<file>
 ```
+
+## Image `.dat` Keys
+
+Mac WeChat can expose image files as local `.dat` caches. Older files often use
+simple XOR and can be decoded without extra key material. Newer V2 files require
+the local image AES/XOR keys. These are separate from SQLCipher database keys.
+
+Use `chatdig image-keys doctor` to test key readiness against one file, a
+directory, or a resolved conversation JSON:
+
+```bash
+chatdig image-keys doctor --dat /path/to/image_t.dat --output-dir outputs/decoded
+```
+
+The doctor command reports counts such as `decoded`, `needs-key`, or `failed`.
+It intentionally does not print the AES key or XOR key.
 
 ## Attachment Parsing
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 - 2026-06-25
+
+- Added `chatdig image-keys doctor` to test WeChat image `.dat` key readiness without printing secrets.
+- Added `chatdig decode-images` and `pipeline --decode-images` for decoding resolved image `.dat` attachments when local image AES/XOR keys are available.
+- Added V2 `.dat` decoding through the public CLI and tests for AES/XOR image decoding.
+
 ## 0.1.1 - 2026-06-25
 
 - Added a Mac WeChat `message_resource.db` bridge for image messages that only export as `[图片]`.

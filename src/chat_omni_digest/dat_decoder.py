@@ -6,8 +6,20 @@ MAGIC_HEADERS = {
     ".jpg": bytes.fromhex("ffd8ff"),
     ".png": b"\x89PNG",
     ".gif": b"GIF8",
-    ".webp": b"RIFF",
 }
+DEFAULT_V1_AES_KEY = b"cfcd208495d565ef"
+
+
+def detect_image_extension(data: bytes) -> str | None:
+    if data.startswith(bytes.fromhex("ffd8ff")):
+        return ".jpg"
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return ".gif"
+    if len(data) >= 12 and data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+        return ".webp"
+    return None
 
 
 def detect_dat_version(data: bytes) -> int:
@@ -69,16 +81,58 @@ def decode_v4_dat(data: bytes, xor_key: int, aes_key: bytes) -> bytes:
     return b"".join(chunks)
 
 
-def decode_dat_file(path: str | Path, output_dir: str | Path) -> Path | None:
+def decode_dat_bytes(
+    data: bytes,
+    *,
+    xor_key: int | None = None,
+    aes_key: bytes | None = None,
+) -> tuple[bytes, str, int] | None:
+    """Decode a WeChat image .dat payload.
+
+    Returns decoded bytes, image extension, and detected dat version. No secret
+    material is returned to callers.
+    """
+    version = detect_dat_version(data)
+    classic = decode_xor_dat(data)
+    if classic:
+        decoded, ext = classic
+        return decoded, ext, version
+
+    if version not in {1, 2}:
+        return None
+
+    header = data[:0x0F]
+    xor_size = int.from_bytes(header[10:14], "little", signed=False) if len(header) >= 14 else 0
+    effective_aes_key = aes_key
+    if version == 1 and effective_aes_key is None:
+        effective_aes_key = DEFAULT_V1_AES_KEY
+    if effective_aes_key is None:
+        return None
+    if xor_size and xor_key is None:
+        return None
+
+    decoded = decode_v4_dat(data, xor_key or 0, effective_aes_key)
+    ext = detect_image_extension(decoded)
+    if not ext:
+        return None
+    return decoded, ext, version
+
+
+def decode_dat_file(
+    path: str | Path,
+    output_dir: str | Path,
+    *,
+    xor_key: int | None = None,
+    aes_key: bytes | None = None,
+) -> Path | None:
     source = Path(path)
     data = source.read_bytes()
-    classic = decode_xor_dat(data)
-    if not classic:
+    decoded = decode_dat_bytes(data, xor_key=xor_key, aes_key=aes_key)
+    if not decoded:
         return None
-    decoded, ext = classic
+    decoded_data, ext, _version = decoded
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     target = output / f"{source.stem}{ext}"
-    target.write_bytes(decoded)
+    target.write_bytes(decoded_data)
     return target
-
