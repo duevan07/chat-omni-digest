@@ -49,3 +49,66 @@ def test_pipeline_resolves_file_attachment(tmp_path: Path):
     report = (out / "report.md").read_text(encoding="utf-8")
     assert "hello attachment" in report
 
+
+def test_pipeline_resolves_mac_wechat_image_resource(tmp_path: Path):
+    account = tmp_path / "account"
+    image_path = account / "msg" / "attach" / "chatabc" / "2026-06" / "Img" / "0123456789abcdef0123456789abcdef_t.dat"
+    image_path.parent.mkdir(parents=True)
+    image_path.write_bytes(bytes.fromhex("070856320807000400000000000001d8"))
+
+    resource_db = tmp_path / "message_resource.db"
+    conn = sqlite3.connect(resource_db)
+    conn.execute(
+        "CREATE TABLE MessageResourceInfo(message_id INTEGER PRIMARY KEY, chat_id INTEGER, sender_id INTEGER, message_local_type INTEGER, message_create_time INTEGER, message_local_id INTEGER, message_svr_id INTEGER, message_origin_source INTEGER, packed_info BLOB)"
+    )
+    conn.execute(
+        "INSERT INTO MessageResourceInfo(message_id, message_local_type, message_local_id, message_svr_id, packed_info) VALUES (?, ?, ?, ?, ?)",
+        (1, 3, 7, 123456, b'\\x12\"\\n 0123456789abcdef0123456789abcdef'),
+    )
+    conn.commit()
+    conn.close()
+
+    source = tmp_path / "chat.json"
+    source.write_text(
+        json.dumps(
+            {
+                "group": {"name": "Demo"},
+                "messages": [
+                    {
+                        "local_id": 7,
+                        "server_id": 123456,
+                        "table": "Msg_chatabc",
+                        "time": "2026-06-25 01:14:56",
+                        "sender": "Alice",
+                        "type": "图片",
+                        "content": "[图片]",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    out = tmp_path / "out"
+    assert (
+        main(
+            [
+                "pipeline",
+                str(source),
+                "--account-dir",
+                str(account),
+                "--message-resource-db",
+                str(resource_db),
+                "--output-dir",
+                str(out),
+                "--copy-media",
+            ]
+        )
+        == 0
+    )
+    resolved = json.loads((out / "conversation.resolved.json").read_text(encoding="utf-8"))
+    attachment = resolved["messages"][0]["attachments"][0]
+    assert attachment["status"] == "resolved"
+    assert attachment["metadata"]["resource_index"] == "0123456789abcdef0123456789abcdef"
+    assert Path(attachment["path"]).exists()

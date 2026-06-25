@@ -6,6 +6,18 @@ from pathlib import Path
 from .models import Conversation
 
 
+def _display_content(content: str) -> str:
+    value = (content or "").replace("\n", " ").replace("\r", " ")
+    if not value:
+        return ""
+    weird = sum(1 for char in value if (ord(char) < 32 and char not in "\t ") or char == "\ufffd")
+    if weird / max(len(value), 1) > 0.03:
+        return "[链接/文件/小程序内容未解码]"
+    if len(value) > 160:
+        return value[:160] + "..."
+    return value
+
+
 def build_markdown_report(conversation: Conversation) -> str:
     messages = conversation.messages
     type_counts = Counter(m.type for m in messages)
@@ -48,9 +60,7 @@ def build_markdown_report(conversation: Conversation) -> str:
 
     lines.extend(["## 最近消息抽样", ""])
     for message in messages[-30:]:
-        content = (message.content or "").replace("\n", " ")
-        if len(content) > 160:
-            content = content[:160] + "..."
+        content = _display_content(message.content)
         lines.append(f"- `{message.time}` **{message.sender}** [{message.type}] {content}")
     lines.append("")
     return "\n".join(lines)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 - 2026-06-25
+
+- Added a Mac WeChat `message_resource.db` bridge for image messages that only export as `[图片]`.
+- Added `--message-resource-db` to `resolve-media` and `pipeline`.
+- Added report cleanup for binary app-message payloads that are not decoded yet.
+
 ## 0.1.0 - 2026-06-24
 
 First packaged release.

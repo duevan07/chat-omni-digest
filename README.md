@@ -33,7 +33,7 @@ This project intentionally studies and consolidates ideas from:
 Install the packaged release from GitHub:
 
 ```bash
-python3 -m pip install "chat-omni-digest[pdf,office,media] @ git+https://github.com/duevan07/chat-omni-digest.git@v0.1.0"
+python3 -m pip install "chat-omni-digest[pdf,office,media] @ git+https://github.com/duevan07/chat-omni-digest.git@v0.1.1"
 ```
 
 After the PyPI publisher is enabled, the shorter install command will be:
@@ -68,6 +68,7 @@ Resolve media and file attachments:
 chatdig resolve-media outputs/conversation.json outputs/conversation.resolved.json \
   --account-dir /path/to/wechat/account \
   --hardlink-db /path/to/hardlink.db \
+  --message-resource-db /path/to/message_resource.db \
   --copy-media outputs/media
 ```
 
@@ -95,6 +96,7 @@ Or run the local pipeline:
 chatdig pipeline examples/sample_wechat_digest.json \
   --account-dir /path/to/wechat/account \
   --hardlink-db /path/to/hardlink.db \
+  --message-resource-db /path/to/message_resource.db \
   --output-dir outputs/demo \
   --pdf \
   --copy-media
@@ -108,10 +110,12 @@ For images, videos, and files, the resolver tries:
 2. Query newer `image_hardlink_info_v3`, `video_hardlink_info_v3`, or `file_hardlink_info_v3`.
 3. Query older `HardLinkImageAttribute`, `HardLinkVideoAttribute`, or `HardLinkFileAttribute`.
 4. Join or map directory IDs through `dir2id` / `HardLink*ID`.
-5. Build candidate paths such as:
+5. For Mac WeChat image messages that only export as `[图片]`, optionally read `message_resource.db` and bridge `MessageResourceInfo.packed_info` to `msg/attach/<chat_hash>/<YYYY-MM>/Img/<resource>_t.dat`.
+6. Build candidate paths such as:
 
 ```text
 msg/attach/<dir1>/<dir2>/Img/<file>
+msg/attach/<chat_hash>/<YYYY-MM>/Img/<resource>_t.dat
 msg/file/<dir1>/<file>
 msg/video/<dir1>/<file>
 FileStorage/MsgAttach/<dir1>/Image/<dir2>/<file>

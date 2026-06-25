@@ -7,6 +7,7 @@ from .attachments import enrich_attachments
 from .io import load_conversation, save_conversation
 from .report import write_markdown_report, write_pdf_report
 from .resolver import resolve_conversation_media
+from .wechat_resource import resolve_wechat_resource_images
 
 
 def _cmd_normalize(args: argparse.Namespace) -> int:
@@ -23,6 +24,13 @@ def _cmd_resolve_media(args: argparse.Namespace) -> int:
         hardlink_db=args.hardlink_db,
         copy_dir=args.copy_media,
     )
+    if args.message_resource_db:
+        resolve_wechat_resource_images(
+            conversation,
+            account_dir=args.account_dir,
+            message_resource_db=args.message_resource_db,
+            copy_dir=args.copy_media,
+        )
     save_conversation(conversation, args.output)
     return 0
 
@@ -59,6 +67,13 @@ def _cmd_pipeline(args: argparse.Namespace) -> int:
         hardlink_db=args.hardlink_db,
         copy_dir=output_dir / "media" if args.copy_media else None,
     )
+    if args.message_resource_db:
+        resolve_wechat_resource_images(
+            conversation,
+            account_dir=args.account_dir,
+            message_resource_db=args.message_resource_db,
+            copy_dir=output_dir / "media" if args.copy_media else None,
+        )
     save_conversation(conversation, resolved)
     enrich_attachments(conversation, max_chars=args.max_chars)
     save_conversation(conversation, enriched)
@@ -83,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("output")
     resolve.add_argument("--account-dir", required=True, help="WeChat account directory containing msg/FileStorage files.")
     resolve.add_argument("--hardlink-db", help="Path to hardlink.db. Auto-detected from account-dir if omitted.")
+    resolve.add_argument("--message-resource-db", help="Optional message_resource.db for Mac WeChat image resource indexes.")
     resolve.add_argument("--copy-media", help="Optional directory to copy resolved media into.")
     resolve.set_defaults(func=_cmd_resolve_media)
 
@@ -103,6 +119,7 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--output-dir", required=True)
     pipeline.add_argument("--account-dir", required=True)
     pipeline.add_argument("--hardlink-db")
+    pipeline.add_argument("--message-resource-db")
     pipeline.add_argument("--copy-media", action="store_true")
     pipeline.add_argument("--max-chars", type=int, default=4000)
     pipeline.add_argument("--pdf", action="store_true", help="Also write report.pdf in the output directory.")
